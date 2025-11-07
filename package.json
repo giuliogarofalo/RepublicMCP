@@ -1,0 +1,50 @@
+{
+  "name": "republic-mcp",
+  "version": "0.1.0",
+  "description": "MCP Server for Italian Parliament Open Data (Camera e Senato)",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "watch": "tsx --watch src/index.ts",
+    "cli": "tsx src/cli-ollama.ts",
+    "cli:basic": "tsx src/cli-client.ts",
+    "web": "tsx src/web-client.ts",
+    "lint": "eslint src/",
+    "format": "prettier --write src/",
+    "test": "vitest"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "sparql",
+    "parliament",
+    "camera-deputati",
+    "senato",
+    "italian-parliament",
+    "open-data",
+    "linked-data"
+  ],
+  "author": "Giulio Garofalo",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "ollama": "^0.5.9",
+    "sparql-http-client": "^3.0.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@typescript-eslint/eslint-plugin": "^8.15.0",
+    "@typescript-eslint/parser": "^8.15.0",
+    "eslint": "^9.15.0",
+    "prettier": "^3.3.3",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
