@@ -188,8 +188,12 @@ classDiagram
     Discussione --> Seduta : session
 
     %% Styling
-    class Deputato,Atto,Votazione,GruppoParlamentare,Governo main-entity
     classDef main-entity fill:#e1f5ff,stroke:#0066cc,stroke-width:3px
+    class Deputato:::main-entity
+    class Atto:::main-entity
+    class Votazione:::main-entity
+    class GruppoParlamentare:::main-entity
+    class Governo:::main-entity
 ```
 
 ## Key Characteristics
