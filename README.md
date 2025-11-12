@@ -1,247 +1,266 @@
-# RepublicMCP - MCP Server per Dati Aperti Camera e Senato
+# RepublicMCP - Italian Parliament Data MCP Server
 
-Un server MCP (Model Context Protocol) per interrogare i dati aperti pubblicati dalla Camera dei Deputati e dal Senato della Repubblica Italiana.
+> MCP (Model Context Protocol) server for querying Italian Parliament open data (Camera dei Deputati and Senato della Repubblica) via SPARQL endpoints.
 
-## Descrizione
+## Overview
 
-Questo server MCP fornisce strumenti per interrogare in modo strutturato gli endpoint SPARQL dei dati aperti del Parlamento italiano, permettendo a chatbot e assistenti AI di accedere a informazioni attendibili e ufficiali su:
+RepublicMCP provides a comprehensive MCP server implementation that enables AI assistants (like Claude) to query Italian Parliament data through 30+ specialized tools. The server integrates with both parliamentary chambers using their official SPARQL endpoints and ontologies.
 
-- Deputati e Senatori
-- Atti parlamentari (disegni di legge, proposte, emendamenti)
-- Votazioni
-- Commissioni e organi parlamentari
-- Governi e membri del governo
-- Sedute e discussioni
+### Key Features
 
-## Caratteristiche
+- **30+ MCP Tools** across both institutions
+- **SPARQL-based** queries with type-safe TypeScript implementations
+- **Dual Institution Support**: Camera dei Deputati and Senato della Repubblica
+- **Modular Architecture** for easy extension
+- **Rich Type System** based on official ontologies (OCD and OSR)
+- **Production Ready** with comprehensive documentation
 
-- Accesso diretto agli endpoint SPARQL ufficiali
-- Query pre-strutturate per casi d'uso comuni
-- Mapping completo dell'ontologia OCD (Ontologia Camera dei Deputati)
-- Supporto per query SPARQL personalizzate
-- Validazione e parsing delle risposte
-- Cache intelligente per ottimizzare le prestazioni
+## Quick Start
 
-## Endpoint Supportati
+### Prerequisites
 
-### Camera dei Deputati
-- **SPARQL Endpoint:** `https://dati.camera.it/sparql`
-- **Ontologia:** OCD (Ontologia Camera dei Deputati)
-- **Documentazione:** https://dati.camera.it/ocd-rappresentazione-semantica-e-documentazione
+- Node.js >= 18.0.0
+- npm or yarn
+- Claude Desktop (for MCP integration)
 
-### Senato della Repubblica
-- _(Da implementare)_
-
-## Struttura del Progetto
-
-```
-republicMCP/
-├── docs/                       # Documentazione
-│   ├── 01-ontologia-camera.md  # Ontologia della Camera
-│   ├── 02-rappresentazione-semantica.md
-│   ├── 03-sparql-endpoint.md
-│   └── 04-query-examples.md    # Esempi di query SPARQL
-├── src/                        # Codice sorgente
-│   ├── index.ts                # Entry point del server MCP
-│   ├── sparql/                 # Client SPARQL
-│   │   ├── client.ts
-│   │   └── queries.ts
-│   ├── tools/                  # Strumenti MCP
-│   │   ├── deputati.ts
-│   │   ├── atti.ts
-│   │   ├── votazioni.ts
-│   │   ├── governi.ts
-│   │   └── custom-query.ts
-│   └── types/                  # TypeScript types
-│       └── ontology.ts
-├── examples/                   # Esempi di utilizzo
-└── package.json
-```
-
-## Strumenti MCP Disponibili
-
-### 1. `search_deputati`
-Cerca deputati per nome, cognome o legislatura.
-
-**Parametri:**
-- `nome` (opzionale): Nome del deputato
-- `cognome` (opzionale): Cognome del deputato
-- `legislatura` (opzionale): Numero della legislatura (es: "19")
-
-### 2. `get_deputato_info`
-Ottiene informazioni dettagliate su un deputato specifico.
-
-**Parametri:**
-- `uri`: URI del deputato
-
-### 3. `search_atti`
-Cerca atti parlamentari.
-
-**Parametri:**
-- `titolo` (opzionale): Parole chiave nel titolo
-- `tipo` (opzionale): Tipo di atto
-- `legislatura` (opzionale): Numero della legislatura
-- `limit` (default: 20): Numero massimo di risultati
-
-### 4. `get_atto_info`
-Ottiene informazioni dettagliate su un atto parlamentare.
-
-**Parametri:**
-- `uri`: URI dell'atto
-
-### 5. `get_votazioni`
-Ottiene le votazioni più recenti o relative ad un atto specifico.
-
-**Parametri:**
-- `atto_uri` (opzionale): URI dell'atto
-- `data_da` (opzionale): Data inizio (YYYYMMDD)
-- `data_a` (opzionale): Data fine (YYYYMMDD)
-- `limit` (default: 20): Numero massimo di risultati
-
-### 6. `get_gruppi_parlamentari`
-Ottiene la lista dei gruppi parlamentari per legislatura.
-
-**Parametri:**
-- `legislatura` (opzionale): Numero della legislatura (default: corrente)
-
-### 7. `get_commissioni`
-Ottiene la lista delle commissioni parlamentari.
-
-**Parametri:**
-- `legislatura` (opzionale): Numero della legislatura
-- `tipo` (opzionale): Tipo di commissione
-
-### 8. `get_governi`
-Ottiene informazioni sui governi.
-
-**Parametri:**
-- `include_membri` (default: false): Include i membri del governo
-
-### 9. `execute_sparql`
-Esegue una query SPARQL personalizzata.
-
-**Parametri:**
-- `query`: Query SPARQL da eseguire
-- `format` (default: "json"): Formato della risposta
-
-## Installazione
+### Installation
 
 ```bash
-cd mine/republicMCP
+# Clone and install dependencies
 npm install
+
+# Build the project
 npm run build
 ```
 
-## Modalità d'Uso
+### Configuration with Claude Desktop
 
-### 1. CLI Interattivo con Ollama (Consigliato)
+Add to your `claude_desktop_config.json`:
 
-Usa il linguaggio naturale per interrogare i dati:
-
-```bash
-# Setup Ollama
-brew install ollama
-ollama pull qwen2.5:14b
-
-# Avvia il CLI
-npm run cli
-```
-
-Poi chiedi:
-- "Chi è Giorgia Meloni?"
-- "Mostrami le ultime votazioni"
-- "Quali sono i gruppi parlamentari?"
-
-Vedi [CLI_USAGE.md](CLI_USAGE.md) per dettagli completi.
-
-### 2. Web Interface
-
-Interfaccia grafica per browser:
-
-```bash
-npm run web
-```
-
-Apri http://localhost:3000
-
-### 3. Integrazione con Claude Desktop
-
-Usa RepublicMCP direttamente con Claude Desktop.
-
-Vedi [INSTALLATION.md](INSTALLATION.md) per la configurazione.
-
-## Utilizzo con Claude Desktop
-
-Aggiungi la seguente configurazione al file `claude_desktop_config.json`:
+**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
-    "republic": {
+    "republican": {
       "command": "node",
-      "args": ["/path/to/republicMCP/dist/index.js"]
+      "args": ["/absolute/path/to/republicMCP/dist/index.js"]
     }
   }
 }
 ```
 
-## Esempi di Utilizzo
+See [INSTALLATION.md](./INSTALLATION.md) for detailed setup instructions.
 
-### Cercare un deputato
+## Available MCP Tools
+
+### Camera dei Deputati (19 tools)
+
+**Deputies & Members**
+- `search_deputati` - Search deputies by name/group
+- `get_deputato_info` - Detailed deputy information
+- `get_deputato_mandati` - Deputy mandates and history
+
+**Parliamentary Acts**
+- `search_atti` - Search parliamentary acts
+- `get_atto_info` - Detailed act information
+- `get_atti_deputato` - Acts by deputy (signer/co-signer)
+- `get_atti_con_fasi` - Acts with full iter phases
+
+**Voting**
+- `get_votazioni` - Recent/filtered votations
+- `get_espressioni_voto` - Detailed vote expressions
+- `get_statistiche_voto_deputato` - Deputy voting statistics
+
+**Organizations**
+- `get_gruppi_parlamentari` - Parliamentary groups
+- `get_commissioni` - Commissions
+- `get_incarichi_gruppi` - Group leadership roles
+- `get_incarichi_organi` - Commission roles
+
+**Government**
+- `get_governi` - Governments information
+- `get_governo_membri` - Government members
+- `get_incarichi_governo` - Ministerial positions
+
+**Debates**
+- `search_interventi` - Search speeches by topic
+- `get_interventi_per_argomento` - Interventions filtered by argument
+
+### Senato della Repubblica (10+ tools)
+
+**Senators**
+- `search_senatori` - Search senators by name/legislature
+- `get_senatore_dettagli` - Detailed senator information
+- `get_senatori_a_vita` - Life senators
+
+**Bills (DDL)**
+- `get_ddl_senato` - Search bills
+- `get_ddl_senatore` - Bills by specific senator
+- `get_ddl_con_iter` - Bills with full legislative iter
+
+**Voting**
+- `get_votazioni_senato` - Recent/filtered votes
+- `get_votazioni_per_senatore` - Votes by senator
+- `get_statistiche_voti_senato` - Voting statistics
+
+**Organizations**
+- `get_commissioni_senato` - Senate commissions
+- `get_gruppi_senato` - Parliamentary groups
+
+## Project Structure
 
 ```
-User: Chi è la presidente del consiglio?
-Assistant: [Usa search_deputati con cognome="Meloni"]
+republicMCP/
+├── src/
+│   ├── core/                    # Shared infrastructure
+│   │   ├── mcp/                 # MCP tool registry
+│   │   ├── sparql/              # SPARQL client & query builder
+│   │   ├── types/               # Common types
+│   │   └── index.ts
+│   ├── institutions/            # Institution-specific modules
+│   │   ├── camera/              # Camera dei Deputati
+│   │   │   ├── ontology/        # OCD types & prefixes
+│   │   │   ├── queries/         # SPARQL query builders
+│   │   │   ├── tools/           # MCP tools
+│   │   │   ├── client.ts        # Camera SPARQL client
+│   │   │   └── index.ts
+│   │   └── senato/              # Senato della Repubblica
+│   │       ├── ontology/        # OSR types & prefixes
+│   │       ├── queries/         # SPARQL query builders
+│   │       ├── tools/           # MCP tools
+│   │       ├── client.ts        # Senato SPARQL client
+│   │       └── index.ts
+│   ├── config/                  # Configuration
+│   └── index.ts                 # Main MCP server
+├── docs/                        # Documentation
+│   ├── camera/                  # Camera documentation
+│   │   ├── README.md            # Full Camera workflow guide
+│   │   ├── ontology-diagram.md  # TypeScript type diagram
+│   │   └── *.md                 # Ontology & query docs
+│   └── senato/                  # Senato documentation
+│       ├── README.md            # Full Senato workflow guide
+│       ├── ontology-diagram.md  # TypeScript type diagram
+│       └── *.md                 # Ontology & query docs
+├── README.md                    # This file
+├── INSTALLATION.md              # Setup guide
+└── CHANGELOG.md                 # Version history
 ```
 
-### Informazioni su un atto
+## Ontologies & Endpoints
 
-```
-User: Dimmi dello stato della legge di bilancio 2024
-Assistant: [Usa search_atti con titolo="bilancio 2024"]
-```
+### Camera dei Deputati
 
-### Votazioni recenti
+- **SPARQL Endpoint**: https://dati.camera.it/sparql
+- **Ontology**: OCD (Ontologia Camera dei Deputati)
+- **Documentation**: https://dati.camera.it/ocd-rappresentazione-semantica-e-documentazione
+- **Key Features**:
+  - Uses `foaf:surname` (not lastName)
+  - Legislature as full URI
+  - Date format: YYYYMMDD
 
-```
-User: Quali sono state le ultime votazioni in aula?
-Assistant: [Usa get_votazioni con limit=10]
-```
+[Full Camera Documentation →](./docs/camera/README.md)
 
-## Documentazione
+### Senato della Repubblica
 
-La documentazione completa dell'ontologia e degli endpoint è disponibile nella cartella `docs/`:
+- **SPARQL Endpoint**: https://dati.senato.it/sparql
+- **Ontology**: OSR (Ontologia Senato Repubblica)
+- **Documentation**: https://dati.senato.it/DatiSenato/browse/21
+- **Key Features**:
+  - Uses `foaf:lastName` (not surname)
+  - Legislature as integer
+  - Shares OCD parliamentary group classes
 
-- [Ontologia Camera dei Deputati](docs/01-ontologia-camera.md)
-- [Rappresentazione Semantica](docs/02-rappresentazione-semantica.md)
-- [SPARQL Endpoint](docs/03-sparql-endpoint.md)
-- [Esempi di Query](docs/04-query-examples.md)
+[Full Senato Documentation →](./docs/senato/README.md)
 
-## Roadmap
+## Documentation
 
-- [x] Documentazione ontologia Camera
-- [x] Esempi di query SPARQL
-- [ ] Implementazione server MCP base
-- [ ] Tool per deputati
-- [ ] Tool per atti parlamentari
-- [ ] Tool per votazioni
-- [ ] Tool per governi e commissioni
-- [ ] Query SPARQL personalizzate
-- [ ] Cache e ottimizzazioni
-- [ ] Supporto Senato della Repubblica
-- [ ] Test suite
-- [ ] Docker container
+- **[Camera dei Deputati Guide](./docs/camera/README.md)** - Complete workflow, examples, and ontology
+- **[Senato della Repubblica Guide](./docs/senato/README.md)** - Complete workflow, examples, and ontology
+- **[Installation Guide](./INSTALLATION.md)** - Setup and configuration
+- **[Changelog](./CHANGELOG.md)** - Version history and updates
 
-## Licenza
+### Key Documentation Sections
+
+Each institution guide includes:
+- 📚 Ontology overview and TypeScript type diagram
+- 🚀 Quick start with example queries
+- 🔍 Real-world examples (Meloni, Salvini case studies)
+- 🛠️ SPARQL patterns and best practices
+- ⚠️ Institution-specific features and gotchas
+- 🧪 Testing guide
+- 🐛 Troubleshooting
+
+## Architecture
+
+RepublicMCP uses a modular architecture:
+
+1. **Core Layer** (`src/core/`)
+   - Shared SPARQL client and query builder
+   - MCP tool registry system
+   - Common TypeScript types
+
+2. **Institution Layer** (`src/institutions/`)
+   - Camera module with 19+ tools
+   - Senato module with 10+ tools
+   - Each with dedicated ontology types, query builders, and tools
+
+3. **Configuration** (`src/config/`)
+   - Centralized endpoint management
+   - Query limits and pagination
+   - Current legislature tracking
+
+This design enables:
+- Easy addition of new institutions
+- Consistent query patterns
+- Reusable SPARQL components
+- Type-safe data handling
+
+## Integration Context
+
+RepublicMCP is designed as a standalone MCP server module within the larger OPEN-PARLAMENT project:
+
+- **republicMCP** (this module): MCP server for parliamentary data access
+- **backend** (separate): Handles authentication, memory, and model management (Ollama/Gemini/Anthropic)
+- **frontend** (separate): User interface
+
+This isolation ensures clean separation of concerns and modular development.
+
+## Technology Stack
+
+- **TypeScript** - Type-safe implementation
+- **Model Context Protocol** - AI integration standard
+- **SPARQL** - Semantic web query language
+- **Node.js** - Runtime environment
+
+## Contributing
+
+Contributions are welcome! Areas for contribution:
+- Additional MCP tools for specific use cases
+- Query optimization
+- Enhanced type definitions
+- Documentation improvements
+- Bug fixes and testing
+
+## License
 
 MIT
 
-## Contributi
+## Resources
 
-Contributi benvenuti! Apri una issue o una pull request.
+### Official Data Sources
+- [Camera dei Deputati - Open Data](https://dati.camera.it/)
+- [Senato della Repubblica - Open Data](https://dati.senato.it/)
+- [Italian Parliament](https://www.parlamento.it/)
 
-## Risorse
-
-- [Camera dei Deputati - Dati Aperti](https://dati.camera.it/)
+### Standards & Specifications
 - [Model Context Protocol](https://modelcontextprotocol.io/)
 - [SPARQL 1.1 Query Language](https://www.w3.org/TR/sparql11-query/)
+- [FOAF Vocabulary](http://xmlns.com/foaf/spec/)
+- [Dublin Core Metadata](http://purl.org/dc/elements/1.1/)
+
+---
+
+**Maintained by**: [Your Name/Organization]
+**Last Updated**: 2025-11-12
+**Version**: 2.0.0

@@ -36,7 +36,7 @@
 🎯 QUICK START (5 minuti):
 
   1. brew install ollama
-  2. ollama pull qwen2.5:14b
+  2. ollama pull codellama:7b-instrucT
   3. ollama serve  (in terminale separato)
   4. npm install && npm run build
   5. npm run cli
@@ -62,7 +62,7 @@
 
 🌟 CARATTERISTICHE:
 
-  ✅ Linguaggio naturale → Ollama qwen2.5:14b
+  ✅ Linguaggio naturale → Ollama codellama:7b-instrucT
   ✅ Dati ufficiali → SPARQL Camera dei Deputati
   ✅ 3 modalità d'uso → CLI, Web, Claude Desktop
   ✅ TypeScript + Types → Type-safe
@@ -86,7 +86,7 @@
     → ollama serve
 
   Modello mancante:
-    → ollama pull qwen2.5:14b
+    → ollama pull codellama:7b-instrucT
 
   Build fallisce:
     → rm -rf node_modules dist
