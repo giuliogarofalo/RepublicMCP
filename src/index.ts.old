@@ -1,0 +1,791 @@
+#!/usr/bin/env node
+
+/**
+ * RepublicMCP - MCP Server for Italian Parliament Open Data
+ */
+
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+  Tool,
+} from "@modelcontextprotocol/sdk/types.js";
+
+import { cameraClient } from "./sparql/client.js";
+import { QueryBuilder } from "./sparql/queries.js";
+import {
+  DeputySearchParams,
+  ActSearchParams,
+  VotingSearchParams,
+  OrganSearchParams,
+  GovernmentSearchParams,
+} from "./types/ontology.js";
+
+// Server instance
+const server = new Server(
+  {
+    name: "republic-mcp",
+    version: "0.1.0",
+  },
+  {
+    capabilities: {
+      tools: {},
+    },
+  }
+);
+
+// Tool definitions
+const TOOLS: Tool[] = [
+  {
+    name: "search_deputati",
+    description:
+      "Cerca deputati della Camera per nome, cognome o legislatura. Restituisce informazioni biografiche, gruppo parlamentare e collegio elettorale.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        nome: {
+          type: "string",
+          description: "Nome del deputato (opzionale)",
+        },
+        cognome: {
+          type: "string",
+          description: "Cognome del deputato (opzionale)",
+        },
+        legislatura: {
+          type: "string",
+          description: 'Legislatura (es: "repubblica_19" per la XIX legislatura, default: corrente)',
+        },
+      },
+    },
+  },
+  {
+    name: "get_deputato_info",
+    description:
+      "Ottiene informazioni dettagliate su un deputato specifico dato il suo URI. Include biografia, mandati, gruppo parlamentare, commissioni e incarichi.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        uri: {
+          type: "string",
+          description: "URI completo del deputato (es: http://dati.camera.it/ocd/deputato.rdf/d123_19)",
+        },
+      },
+      required: ["uri"],
+    },
+  },
+  {
+    name: "search_atti",
+    description:
+      "Cerca atti parlamentari (disegni di legge, proposte, mozioni) per titolo, tipo o legislatura.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        titolo: {
+          type: "string",
+          description: "Parole chiave nel titolo dell'atto (opzionale)",
+        },
+        tipo: {
+          type: "string",
+          description: "Tipo di atto (es: 'disegno di legge', 'mozione', opzionale)",
+        },
+        legislatura: {
+          type: "string",
+          description: 'Legislatura (es: "repubblica_19", default: corrente)',
+        },
+        stato: {
+          type: "string",
+          description: "Stato dell'iter (opzionale)",
+        },
+        limit: {
+          type: "number",
+          description: "Numero massimo di risultati (default: 20)",
+        },
+      },
+    },
+  },
+  {
+    name: "get_atto_info",
+    description:
+      "Ottiene informazioni dettagliate su un atto parlamentare specifico, incluse le fasi dell'iter, i proponenti e le votazioni.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        uri: {
+          type: "string",
+          description: "URI completo dell'atto (es: http://dati.camera.it/ocd/attocamera.rdf/ac19_1234)",
+        },
+      },
+      required: ["uri"],
+    },
+  },
+  {
+    name: "get_votazioni",
+    description: "Ottiene le votazioni recenti o relative ad un atto specifico.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        atto_uri: {
+          type: "string",
+          description: "URI dell'atto (opzionale, per filtrare votazioni su un atto specifico)",
+        },
+        data_da: {
+          type: "string",
+          description: "Data inizio nel formato YYYYMMDD (opzionale)",
+        },
+        data_a: {
+          type: "string",
+          description: "Data fine nel formato YYYYMMDD (opzionale)",
+        },
+        limit: {
+          type: "number",
+          description: "Numero massimo di risultati (default: 20)",
+        },
+      },
+    },
+  },
+  {
+    name: "get_gruppi_parlamentari",
+    description: "Ottiene la lista dei gruppi parlamentari per una determinata legislatura.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        legislatura: {
+          type: "string",
+          description: 'Legislatura (es: "repubblica_19", default: corrente)',
+        },
+      },
+    },
+  },
+  {
+    name: "get_commissioni",
+    description: "Ottiene la lista delle commissioni e organi parlamentari.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        legislatura: {
+          type: "string",
+          description: 'Legislatura (es: "repubblica_19", default: corrente)',
+        },
+        tipo: {
+          type: "string",
+          description: "Tipo di organo (es: 'commissione', opzionale)",
+        },
+      },
+    },
+  },
+  {
+    name: "get_governi",
+    description: "Ottiene informazioni sui governi della Repubblica.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        include_membri: {
+          type: "boolean",
+          description: "Include i membri del governo (default: false)",
+        },
+      },
+    },
+  },
+  {
+    name: "get_governo_membri",
+    description: "Ottiene i membri di un governo specifico.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        uri: {
+          type: "string",
+          description: "URI del governo",
+        },
+      },
+      required: ["uri"],
+    },
+  },
+  {
+    name: "search_interventi",
+    description:
+      "Cerca interventi in aula su un argomento specifico. Restituisce i deputati che sono intervenuti e le relative sedute.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        argomento: {
+          type: "string",
+          description: "Argomento o parola chiave da cercare negli interventi",
+        },
+        legislatura: {
+          type: "string",
+          description: 'Legislatura (es: "repubblica_19", default: corrente)',
+        },
+        limit: {
+          type: "number",
+          description: "Numero massimo di risultati (default: 20)",
+        },
+      },
+      required: ["argomento"],
+    },
+  },
+  {
+    name: "execute_sparql",
+    description:
+      "Esegue una query SPARQL personalizzata sull'endpoint della Camera dei Deputati. Per utenti avanzati.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "Query SPARQL da eseguire",
+        },
+      },
+      required: ["query"],
+    },
+  },
+  {
+    name: "get_atti_con_fasi",
+    description:
+      "Ottieni atti con le loro fasi di iter e date di approvazione. Utile per seguire l'evoluzione legislativa.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        legislatura: {
+          type: "string",
+          description: 'Legislatura (es: "repubblica_19", default: corrente)',
+        },
+        data_da: {
+          type: "string",
+          description: "Data inizio periodo (formato: YYYYMMDD)",
+        },
+        data_a: {
+          type: "string",
+          description: "Data fine periodo (formato: YYYYMMDD)",
+        },
+        limit: {
+          type: "number",
+          description: "Numero massimo di risultati (default: 100)",
+        },
+      },
+    },
+  },
+  {
+    name: "get_atti_deputato",
+    description:
+      "Ottieni gli atti presentati da un deputato come primo firmatario o cofirmatario.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        cognome: {
+          type: "string",
+          description: "Cognome del deputato",
+        },
+        nome: {
+          type: "string",
+          description: "Nome del deputato (opzionale)",
+        },
+        legislatura: {
+          type: "string",
+          description: 'Legislatura (es: "repubblica_19", default: corrente)',
+        },
+        ruolo: {
+          type: "string",
+          description: 'Ruolo: "primo_firmatario", "altro_firmatario", o "both" (default: both)',
+        },
+        limit: {
+          type: "number",
+          description: "Numero massimo di risultati (default: 100)",
+        },
+      },
+      required: ["cognome"],
+    },
+  },
+  {
+    name: "get_espressioni_voto",
+    description:
+      "Ottieni i dettagli di voto di ogni deputato per una specifica votazione.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        data: {
+          type: "string",
+          description: "Data votazione (formato: YYYYMMDD, es: 20140611)",
+        },
+        numero: {
+          type: "string",
+          description: "Numero votazione (es: 001)",
+        },
+      },
+      required: ["data", "numero"],
+    },
+  },
+  {
+    name: "get_statistiche_voto_deputato",
+    description:
+      "Ottieni statistiche sui voti di un deputato (favorevoli, contrari, astenuti, etc).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        cognome: {
+          type: "string",
+          description: "Cognome del deputato",
+        },
+        nome: {
+          type: "string",
+          description: "Nome del deputato (opzionale)",
+        },
+        legislatura: {
+          type: "string",
+          description: 'Legislatura (es: "repubblica_19", default: corrente)',
+        },
+        tipo_voto: {
+          type: "string",
+          description: 'Tipo voto: "Favorevole", "Contrario", "Astensione", "Ha votato", "Non ha votato"',
+        },
+        data_da: {
+          type: "string",
+          description: "Data inizio periodo (formato: YYYYMM)",
+        },
+        data_a: {
+          type: "string",
+          description: "Data fine periodo (formato: YYYYMM)",
+        },
+      },
+      required: ["cognome"],
+    },
+  },
+  {
+    name: "get_incarichi_governo_deputati",
+    description:
+      "Ottieni gli incarichi di governo ricoperti dai deputati.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        legislatura: {
+          type: "string",
+          description: 'Legislatura (es: "repubblica_19", default: corrente)',
+        },
+        cognome: {
+          type: "string",
+          description: "Cognome del deputato (opzionale, per filtrare)",
+        },
+        nome: {
+          type: "string",
+          description: "Nome del deputato (opzionale, per filtrare)",
+        },
+      },
+    },
+  },
+  {
+    name: "get_interventi_per_argomento",
+    description:
+      "Cerca interventi in aula per argomento, con possibilità di filtrare per deputato.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        argomento: {
+          type: "string",
+          description: "Argomento o parola chiave (es: 'immigrazione', 'sanità')",
+        },
+        legislatura: {
+          type: "string",
+          description: 'Legislatura (es: "repubblica_18", default: corrente)',
+        },
+        cognome: {
+          type: "string",
+          description: "Cognome deputato (opzionale, per filtrare)",
+        },
+        nome: {
+          type: "string",
+          description: "Nome deputato (opzionale, per filtrare)",
+        },
+        limit: {
+          type: "number",
+          description: "Numero massimo di risultati (default: 50)",
+        },
+      },
+      required: ["argomento"],
+    },
+  },
+  {
+    name: "get_incarichi_gruppi_parlamentari",
+    description:
+      "Ottieni gli incarichi nei gruppi parlamentari con date di inizio e fine.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        legislatura: {
+          type: "string",
+          description: 'Legislatura (es: "repubblica_19", default: corrente)',
+        },
+      },
+    },
+  },
+  {
+    name: "get_incarichi_organi_parlamentari",
+    description:
+      "Ottieni gli incarichi negli organi parlamentari (commissioni, etc) con date.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        legislatura: {
+          type: "string",
+          description: 'Legislatura (es: "repubblica_19", default: corrente)',
+        },
+      },
+    },
+  },
+];
+
+// List tools handler
+server.setRequestHandler(ListToolsRequestSchema, async () => {
+  return { tools: TOOLS };
+});
+
+// Call tool handler
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const { name, arguments: args } = request.params;
+
+  try {
+    if (!args) {
+      throw new Error("Missing arguments");
+    }
+
+    switch (name) {
+      case "search_deputati": {
+        const params: DeputySearchParams = {
+          firstName: args.nome as string,
+          surname: args.cognome as string,
+          legislature: args.legislatura as string,
+        };
+        const query = QueryBuilder.getCurrentDeputies(params);
+        const result = await cameraClient.select(query);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "get_deputato_info": {
+        const uri = args.uri as string;
+        const query = QueryBuilder.getDeputyDetails(uri);
+        const result = await cameraClient.select(query);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "search_atti": {
+        const params: ActSearchParams = {
+          title: args.titolo as string,
+          actType: args.tipo as string,
+          legislature: args.legislatura as string,
+          status: args.stato as string,
+          limit: args.limit as number,
+        };
+        const query = QueryBuilder.searchActs(params);
+        const result = await cameraClient.select(query);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "get_atto_info": {
+        const uri = args.uri as string;
+        const query = QueryBuilder.getActDetails(uri);
+        const result = await cameraClient.select(query);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "get_votazioni": {
+        const params: VotingSearchParams = {
+          actUri: args.atto_uri as string,
+          dateFrom: args.data_da as string,
+          dateTo: args.data_a as string,
+          limit: args.limit as number,
+        };
+        const query = QueryBuilder.getVotings(params);
+        const result = await cameraClient.select(query);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "get_gruppi_parlamentari": {
+        const query = QueryBuilder.getParliamentaryGroups(args.legislatura as string);
+        const result = await cameraClient.select(query);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "get_commissioni": {
+        const params: OrganSearchParams = {
+          legislature: args.legislatura as string,
+          organType: args.tipo as string,
+        };
+        const query = QueryBuilder.getOrgans(params);
+        const result = await cameraClient.select(query);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "get_governi": {
+        const query = QueryBuilder.getGovernments();
+        const result = await cameraClient.select(query);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "get_governo_membri": {
+        const uri = args.uri as string;
+        const query = QueryBuilder.getGovernmentMembers(uri);
+        const result = await cameraClient.select(query);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "search_interventi": {
+        const argomento = args.argomento as string;
+        const legislatura = args.legislatura as string;
+        const limit = (args.limit as number) || 20;
+        const query = QueryBuilder.searchInterventions(argomento, legislatura, limit);
+        const result = await cameraClient.select(query);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "execute_sparql": {
+        const query = args.query as string;
+        const result = await cameraClient.select(query);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "get_atti_con_fasi": {
+        const params = {
+          legislature: args.legislatura as string,
+          dateFrom: args.data_da as string,
+          dateTo: args.data_a as string,
+          limit: args.limit as number,
+        };
+        const query = QueryBuilder.getActsWithIterPhases(params);
+        const result = await cameraClient.select(query);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "get_atti_deputato": {
+        const params = {
+          surname: args.cognome as string,
+          firstName: args.nome as string,
+          legislature: args.legislatura as string,
+          role: args.ruolo as "primo_firmatario" | "altro_firmatario" | "both",
+          limit: args.limit as number,
+        };
+        const query = QueryBuilder.getDeputyActs(params);
+        const result = await cameraClient.select(query);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "get_espressioni_voto": {
+        const params = {
+          date: args.data as string,
+          voteNumber: args.numero as string,
+        };
+        const query = QueryBuilder.getVoteExpressions(params);
+        const result = await cameraClient.select(query);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "get_statistiche_voto_deputato": {
+        const params = {
+          surname: args.cognome as string,
+          firstName: args.nome as string,
+          legislature: args.legislatura as string,
+          voteType: args.tipo_voto as "Favorevole" | "Contrario" | "Astensione" | "Ha votato" | "Non ha votato",
+          dateFrom: args.data_da as string,
+          dateTo: args.data_a as string,
+        };
+        const query = QueryBuilder.getDeputyVotingStats(params);
+        const result = await cameraClient.select(query);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "get_incarichi_governo_deputati": {
+        const params = {
+          legislature: args.legislatura as string,
+          surname: args.cognome as string,
+          firstName: args.nome as string,
+        };
+        const query = QueryBuilder.getDeputyGovernmentPositions(params);
+        const result = await cameraClient.select(query);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "get_interventi_per_argomento": {
+        const params = {
+          topic: args.argomento as string,
+          legislature: args.legislatura as string,
+          surname: args.cognome as string,
+          firstName: args.nome as string,
+          limit: args.limit as number,
+        };
+        const query = QueryBuilder.getDeputyInterventionsByTopic(params);
+        const result = await cameraClient.select(query);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "get_incarichi_gruppi_parlamentari": {
+        const legislatura = args.legislatura as string;
+        const query = QueryBuilder.getParliamentaryGroupPositions(legislatura);
+        const result = await cameraClient.select(query);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      case "get_incarichi_organi_parlamentari": {
+        const legislatura = args.legislatura as string;
+        const query = QueryBuilder.getParliamentaryOrganPositions(legislatura);
+        const result = await cameraClient.select(query);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      default:
+        throw new Error(`Unknown tool: ${name}`);
+    }
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+        },
+      ],
+      isError: true,
+    };
+  }
+});
+
+// Start server
+async function main() {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error("RepublicMCP server running on stdio");
+}
+
+main().catch((error) => {
+  console.error("Server error:", error);
+  process.exit(1);
+});

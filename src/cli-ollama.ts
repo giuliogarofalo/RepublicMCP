@@ -2,7 +2,7 @@
 
 /**
  * Interactive CLI client for RepublicMCP with Ollama integration
- * Uses qwen2.5:14b for natural language queries
+ * Uses codellama:7b-instrucT for natural language queries
  */
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
@@ -88,12 +88,20 @@ class MCPOllamaClient {
       { name: "get_governi", description: "Info sui governi" },
       { name: "get_governo_membri", description: "Membri di un governo" },
       { name: "search_interventi", description: "Cerca interventi in aula" },
+      { name: "get_atti_con_fasi", description: "Atti con fasi iter e date approvazione" },
+      { name: "get_atti_deputato", description: "Atti presentati da deputato" },
+      { name: "get_espressioni_voto", description: "Voti dettagliati per votazione" },
+      { name: "get_statistiche_voto_deputato", description: "Statistiche voti deputato" },
+      { name: "get_incarichi_governo_deputati", description: "Incarichi governo deputati" },
+      { name: "get_interventi_per_argomento", description: "Interventi per argomento" },
+      { name: "get_incarichi_gruppi_parlamentari", description: "Incarichi gruppi parlamentari" },
+      { name: "get_incarichi_organi_parlamentari", description: "Incarichi organi parlamentari" },
       { name: "execute_sparql", description: "Query SPARQL personalizzate" },
     ];
     log(`✓ Caricati ${this.tools.length} tools MCP`, "green");
 
     // Test Ollama connection
-    const model = process.env.OLLAMA_MODEL || "qwen2.5:14b";
+    const model = process.env.OLLAMA_MODEL || "codellama:7b-instrucT";
     log(`\n🤖 Connessione a Ollama (${model})...`, "yellow");
     try {
       const models = await this.ollama.list();
@@ -176,6 +184,14 @@ Available tools:
 - get_governi: params {include_membri}
 - get_governo_membri: params {uri}
 - search_interventi: params {argomento, legislatura, limit}
+- get_atti_con_fasi: params {legislatura, data_da, data_a, limit}
+- get_atti_deputato: params {cognome, nome, legislatura, ruolo, limit}
+- get_espressioni_voto: params {data, numero}
+- get_statistiche_voto_deputato: params {cognome, nome, legislatura, tipo_voto, data_da, data_a}
+- get_incarichi_governo_deputati: params {legislatura, cognome, nome}
+- get_interventi_per_argomento: params {argomento, legislatura, cognome, nome, limit}
+- get_incarichi_gruppi_parlamentari: params {legislatura}
+- get_incarichi_organi_parlamentari: params {legislatura}
 
 Return ONLY valid JSON (no markdown, no backticks):
 {"tool": "tool_name", "params": {...}, "reasoning": "why"}
@@ -185,12 +201,17 @@ Q: Chi è Meloni? A: {"tool":"search_deputati","params":{"cognome":"Meloni"},"re
 Q: Ultime 5 votazioni A: {"tool":"get_votazioni","params":{"limit":5},"reasoning":"get recent votes"}
 Q: Gruppi parlamentari A: {"tool":"get_gruppi_parlamentari","params":{},"reasoning":"list groups"}
 Q: Atti ecologia A: {"tool":"search_atti","params":{"titolo":"ecologia","limit":3},"reasoning":"search acts by keyword"}
+Q: Atti presentati da Meloni A: {"tool":"get_atti_deputato","params":{"cognome":"Meloni"},"reasoning":"acts by deputy"}
+Q: Interventi sull'immigrazione A: {"tool":"get_interventi_per_argomento","params":{"argomento":"immigrazione","limit":10},"reasoning":"interventions on topic"}
+Q: Statistiche voti Rossi A: {"tool":"get_statistiche_voto_deputato","params":{"cognome":"Rossi"},"reasoning":"voting stats"}
+Q: Incarichi di governo A: {"tool":"get_incarichi_governo_deputati","params":{},"reasoning":"government positions"}
+Q: Atti con iter completo A: {"tool":"get_atti_con_fasi","params":{"limit":20},"reasoning":"acts with phases"}
 
 CRITICAL: Return ONLY the JSON object. NO other text.`;
 
     try {
       // Usa modello da env o default
-      const model = process.env.OLLAMA_MODEL || "qwen2.5:14b";
+      const model = process.env.OLLAMA_MODEL || "codellama:7b-instrucT";
 
       const response = await this.ollama.chat({
         model: model,
@@ -242,8 +263,8 @@ CRITICAL: Return ONLY the JSON object. NO other text.`;
       await this.callTool(parsed.tool, parsed.params);
     } catch (error: any) {
       if (error.message?.includes("model")) {
-        log("\n❌ Modello qwen2.5:14b non trovato.", "red");
-        log("💡 Esegui: ollama pull qwen2.5:14b", "yellow");
+        log("\n❌ Modello codellama:7b-instrucT non trovato.", "red");
+        log("💡 Esegui: ollama pull codellama:7b-instrucT", "yellow");
       } else {
         log(`\n❌ Errore nell'analisi: ${error.message}`, "red");
         log("💡 Prova a riformulare la domanda o usa /help", "yellow");
