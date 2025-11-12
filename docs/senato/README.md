@@ -591,9 +591,20 @@ FILTER(xsd:date(str(?data)) >= xsd:date("2023-01-01"))
 
 ## 🖼️ Diagramma Ontologia
 
-### Generazione Diagramma
+### 📊 Diagramma TypeScript Type System
 
-Per generare un diagramma visuale dell'ontologia Senato:
+**[Visualizza il diagramma completo →](./ontology-diagram.md)**
+
+Il diagramma mostra tutte le classi TypeScript basate sull'ontologia OSR con:
+- Classi principali (Senatore, Ddl, Votazione, etc.)
+- Proprietà e tipi
+- Relazioni tra entità
+- Caratteristiche specifiche Senato (lastName, legislature integer, inizio/fine)
+- Integrazione OCD per gruppi parlamentari
+
+### Generazione Diagramma da Ontologia RDF
+
+Per generare un diagramma visuale dall'ontologia RDF ufficiale del Senato:
 
 **Opzione 1: WebVOWL (Raccomandato)**
 1. Vai a http://vowl.visualdataweb.org/webvowl.html

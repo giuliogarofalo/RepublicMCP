@@ -599,9 +599,19 @@ FILTER(xsd:integer(?data) <= 20231231)
 
 ## 🖼️ Diagramma Ontologia
 
-### Generazione Diagramma
+### 📊 Diagramma TypeScript Type System
 
-Per generare un diagramma visuale dell'ontologia Camera:
+**[Visualizza il diagramma completo →](./ontology-diagram.md)**
+
+Il diagramma mostra tutte le classi TypeScript basate sull'ontologia OCD con:
+- Classi principali (Deputato, Atto, Votazione, etc.)
+- Proprietà e tipi
+- Relazioni tra entità
+- Caratteristiche specifiche Camera (surname, URI legislature, date YYYYMMDD)
+
+### Generazione Diagramma da Ontologia RDF
+
+Per generare un diagramma visuale dall'ontologia RDF ufficiale della Camera:
 
 **Opzione 1: Online Tools**
 1. Vai a http://www.easyrdf.org/converter
