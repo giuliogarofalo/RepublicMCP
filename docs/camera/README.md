@@ -597,53 +597,233 @@ FILTER(xsd:integer(?data) <= 20231231)
 
 ---
 
-## 🖼️ Diagramma Ontologia
+## 🖼️ Diagramma Ontologia TypeScript
 
-### 📊 Diagramma TypeScript Type System
+### 📊 Struttura Dati e Relazioni
 
-**[Visualizza il diagramma completo →](./ontology-diagram.md)**
+Il seguente diagramma mostra la struttura completa dei types TypeScript basati sull'ontologia OCD della Camera:
 
-Il diagramma mostra tutte le classi TypeScript basate sull'ontologia OCD con:
-- Classi principali (Deputato, Atto, Votazione, etc.)
-- Proprietà e tipi
-- Relazioni tra entità
-- Caratteristiche specifiche Camera (surname, URI legislature, date YYYYMMDD)
+```mermaid
+classDiagram
+    %% === PERSONE ===
+    class Persona {
+        +string uri
+        +string firstName
+        +string surname
+        +string gender
+        +string birthDate
+        +string birthPlace
+        +string photo
+    }
 
-### Generazione Diagramma da Ontologia RDF
+    class Deputato {
+        +string uri
+        +Persona person
+        +number legislature
+        +string legislatureUri
+        +string firstName
+        +string surname
+        +Mandato[] mandates
+        +GruppoParlamentare currentGroup
+        +Commissione[] commissions
+    }
 
-Per generare un diagramma visuale dall'ontologia RDF ufficiale della Camera:
+    class Mandato {
+        +string uri
+        +Elezione election
+        +string start
+        +string end
+        +string validationDate
+        +string constituency
+    }
 
-**Opzione 1: Online Tools**
-1. Vai a http://www.easyrdf.org/converter
-2. Input URL: `http://dati.camera.it/ocd/classi.rdf`
-3. Output format: SVG Graph
-4. Salva come `/docs/camera/ontology-diagram.svg`
+    class Elezione {
+        +string uri
+        +string constituency
+        +string list
+        +string date
+    }
 
-**Opzione 2: WebVOWL**
-1. Vai a http://vowl.visualdataweb.org/webvowl.html
-2. Carica ontologia RDF dalla Camera
-3. Esplora interattivamente classi e proprietà
+    %% === ATTI ===
+    class Atto {
+        +string uri
+        +string identifier
+        +string title
+        +string actType
+        +number legislature
+        +string presentationDate
+        +boolean concluded
+        +IterPhase[] iter
+        +Deputato[] proponents
+    }
 
-**Opzione 3: Protégé**
-1. Scarica Protégé: https://protege.stanford.edu/
-2. Apri ontologia: `http://dati.camera.it/ocd/classi.rdf`
-3. Usa OntoGraf plugin per visualizzazioni
+    class IterPhase {
+        +string uri
+        +string phase
+        +string date
+        +string description
+    }
 
-### Struttura Principale
+    %% === VOTAZIONI ===
+    class Votazione {
+        +string uri
+        +string identifier
+        +string title
+        +string date
+        +number votesFor
+        +number votesAgainst
+        +number abstentions
+        +boolean approved
+        +string relatedAct
+    }
+
+    class Voto {
+        +string uri
+        +string voting
+        +string deputy
+        +VoteExpression expression
+    }
+
+    %% === GRUPPI E ORGANI ===
+    class GruppoParlamentare {
+        +string uri
+        +string officialName
+        +string abbreviation
+        +number legislature
+        +string start
+        +string end
+        +Deputato[] members
+    }
+
+    class AdesioneGruppo {
+        +string uri
+        +string deputy
+        +string group
+        +string start
+        +string end
+    }
+
+    class Organo {
+        +string uri
+        +string name
+        +string organType
+        +number legislature
+        +Membro[] members
+    }
+
+    class Membro {
+        +string uri
+        +string organ
+        +string deputy
+        +string role
+        +string start
+        +string end
+    }
+
+    %% === GOVERNO ===
+    class Governo {
+        +string uri
+        +string name
+        +string start
+        +string end
+        +Persona primeMinister
+        +MembroGoverno[] members
+    }
+
+    class MembroGoverno {
+        +string uri
+        +string person
+        +string government
+        +string position
+        +string start
+        +string end
+    }
+
+    %% === INTERVENTI ===
+    class Seduta {
+        +string uri
+        +string sessionNumber
+        +string date
+        +string title
+    }
+
+    class Discussione {
+        +string uri
+        +string session
+        +string topic
+        +Intervento[] interventions
+    }
+
+    class Intervento {
+        +string uri
+        +string deputy
+        +string discussion
+        +string text
+        +string date
+    }
+
+    %% === RELAZIONI ===
+    Deputato --> Persona : extends
+    Deputato "1" --> "*" Mandato : has
+    Mandato "*" --> "0..1" Elezione : from
+
+    Deputato "1" --> "*" AdesioneGruppo : member
+    AdesioneGruppo "*" --> "1" GruppoParlamentare : to
+
+    Deputato "1" --> "*" Membro : participates
+    Membro "*" --> "1" Organo : in
+
+    Atto "1" --> "*" IterPhase : phases
+    Atto "*" --> "*" Deputato : presentedBy
+
+    Votazione "1" --> "*" Voto : contains
+    Votazione "*" ..> "0..1" Atto : about
+    Voto "*" --> "1" Deputato : by
+
+    Governo "1" --> "1" Persona : ledBy
+    Governo "1" --> "*" MembroGoverno : members
+    MembroGoverno "*" --> "1" Persona : person
+
+    Discussione "1" --> "1" Seduta : during
+    Discussione "1" --> "*" Intervento : contains
+    Intervento "*" --> "1" Deputato : by
+```
+
+### 🎯 Caratteristiche Chiave dell'Ontologia Camera
+
+**⚠️ Differenze Critiche con Senato:**
+
+| Caratteristica | Camera (OCD) | Senato (OSR) |
+|----------------|--------------|--------------|
+| **Cognome** | `foaf:surname` | `foaf:lastName` |
+| **Legislatura** | URI completo `<http://...repubblica_19>` | Numero intero `19` |
+| **Date** | `ocd:startDate`/`ocd:endDate` | `osr:inizio`/`osr:fine` |
+| **Formato Date** | YYYYMMDD (integer: `20231013`) | ISO string (`"2023-10-13"`) |
+| **Mandati Attivi** | `MINUS { ?mandato ocd:endDate ?fine }` | `FILTER(!bound(?fine))` |
+
+### 📊 Gerarchia Entità
 
 ```
-Legislatura (centro)
-├── Deputato
-│   ├── Mandato
-│   ├── Gruppo Parlamentare
-│   └── Commissione
-├── Atto
-│   ├── Iter
-│   └── Votazione
+Legislatura (URI completo)
+│
+├── Deputato → Persona
+│   ├── Mandato → Elezione
+│   ├── AdesioneGruppo → GruppoParlamentare
+│   └── Membro → Organo/Commissione
+│
+├── Atto Parlamentare
+│   ├── IterPhase (fasi)
+│   └── Deputati (proponents)
+│
+├── Votazione
+│   └── Voto → Deputato
+│
 ├── Governo
-│   └── Membro Governo
-└── Organo
-    └── Seduta
+│   └── MembroGoverno → Persona
+│
+└── Seduta
+    └── Discussione
+        └── Intervento → Deputato
 ```
 
 ---

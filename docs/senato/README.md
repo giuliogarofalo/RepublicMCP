@@ -589,60 +589,196 @@ FILTER(xsd:date(str(?data)) >= xsd:date("2023-01-01"))
 
 ---
 
-## 🖼️ Diagramma Ontologia
+## 🖼️ Diagramma Ontologia TypeScript
 
-### 📊 Diagramma TypeScript Type System
+### 📊 Struttura Dati e Relazioni
 
-**[Visualizza il diagramma completo →](./ontology-diagram.md)**
+Il seguente diagramma mostra la struttura completa dei types TypeScript basati sull'ontologia OSR del Senato:
 
-Il diagramma mostra tutte le classi TypeScript basate sull'ontologia OSR con:
-- Classi principali (Senatore, Ddl, Votazione, etc.)
-- Proprietà e tipi
-- Relazioni tra entità
-- Caratteristiche specifiche Senato (lastName, legislature integer, inizio/fine)
-- Integrazione OCD per gruppi parlamentari
+```mermaid
+classDiagram
+    %% === SENATORE ===
+    class Senatore {
+        +string uri
+        +string firstName
+        +string lastName
+        +string photo
+        +string gender
+        +Mandato[] mandates
+        +AfferenzaCommissione[] commissions
+        +AdesioneGruppo[] groups
+        +string[] interventions
+    }
 
-### Generazione Diagramma da Ontologia RDF
+    class Mandato {
+        +string uri
+        +number legislature
+        +string start
+        +string end
+        +MandateType type
+        +string nominationDate
+        +string endReason
+        +string electionRegion
+    }
 
-Per generare un diagramma visuale dall'ontologia RDF ufficiale del Senato:
+    %% === DDL ===
+    class Ddl {
+        +string uri
+        +number idDdl
+        +string ramo
+        +string legislature
+        +string titolo
+        +string titoloBreve
+        +string dataPresentazione
+        +string statoDdl
+        +Iniziativa[] iniziative
+        +IterDdl iter
+        +Assegnazione[] assegnazioni
+        +Relatore[] relatori
+    }
 
-**Opzione 1: WebVOWL (Raccomandato)**
-1. Vai a http://vowl.visualdataweb.org/webvowl.html
-2. Carica ontologia OSR dal Senato
-3. Esplora interattivamente classi e proprietà (20+ classi, 90+ proprietà)
-4. Esporta come SVG e salva in `/docs/senato/ontology-diagram.svg`
+    class Iniziativa {
+        +string uri
+        +string presentatore
+        +boolean primoFirmatario
+        +string dataAggiuntaFirma
+        +string dataRitiroFirma
+    }
 
-**Opzione 2: Online RDF Converter**
-1. Vai a http://www.easyrdf.org/converter
-2. Input: URL ontologia Senato
-3. Output format: SVG Graph
-4. Salva risultato
+    class IterDdl {
+        +string uri
+        +number idDdl
+        +FaseIter[] fasi
+    }
 
-**Opzione 3: Protégé**
-1. Scarica Protégé: https://protege.stanford.edu/
-2. Apri ontologia OSR dal Senato
-3. Usa OntoGraf plugin per visualizzazioni personalizzate
+    class FaseIter {
+        +string uri
+        +number progrIter
+        +object ddlRef
+    }
 
-### Struttura Principale
+    %% === VOTAZIONE ===
+    class Votazione {
+        +string uri
+        +string numero
+        +string legislature
+        +object seduta
+        +string oggetto
+        +string esito
+        +number presenti
+        +number votanti
+        +number favorevoli
+        +number contrari
+        +number astenuti
+        +string[] votiFavorevoli
+        +string[] votiContrari
+        +string[] votiAstenuti
+    }
+
+    %% === COMMISSIONI ===
+    class Commissione {
+        +string uri
+        +string categoriaCommissione
+        +string ordinale
+        +string titolo
+        +object denominazione
+    }
+
+    class AfferenzaCommissione {
+        +string uri
+        +string commissione
+        +string inizio
+        +string fine
+        +string carica
+    }
+
+    %% === GRUPPI ===
+    class GruppoParlamentare {
+        +string uri
+        +object denominazione
+    }
+
+    class AdesioneGruppo {
+        +string uri
+        +string gruppo
+        +string inizio
+        +string fine
+        +string carica
+    }
+
+    %% === INTERVENTI ===
+    class Intervento {
+        +string uri
+        +string senatore
+    }
+
+    class Assegnazione {
+        +string uri
+        +string commissione
+        +string dataAssegnazione
+    }
+
+    class Relatore {
+        +string uri
+        +string senatore
+        +string commissione
+    }
+
+    %% === RELAZIONI ===
+    Senatore "1" --> "*" Mandato : has
+    Senatore "1" --> "*" AfferenzaCommissione : memberOf
+    Senatore "1" --> "*" AdesioneGruppo : adheresTo
+    Senatore "1" --> "*" Intervento : makes
+
+    AfferenzaCommissione "*" --> "1" Commissione : refersTo
+    AdesioneGruppo "*" --> "1" GruppoParlamentare : refersTo
+
+    Ddl "1" --> "*" Iniziativa : hasInitiatives
+    Ddl "1" --> "1" IterDdl : hasIter
+    Ddl "1" --> "*" Assegnazione : hasAssignments
+    Ddl "1" --> "*" Relatore : hasRapporteurs
+
+    Iniziativa "*" --> "1" Senatore : presentedBy
+    IterDdl "1" --> "*" FaseIter : consistsOf
+    Relatore "*" --> "1" Senatore : is
+
+    Votazione "*" ..> "*" Senatore : votes
+    Intervento "*" --> "1" Senatore : madeBy
+```
+
+### 🎯 Caratteristiche Chiave dell'Ontologia Senato
+
+**⚠️ Differenze Critiche con Camera:**
+
+| Caratteristica | Senato (OSR) | Camera (OCD) |
+|----------------|--------------|--------------|
+| **Cognome** | `foaf:lastName` | `foaf:surname` |
+| **Legislatura** | Numero intero `19` | URI completo `<http://...repubblica_19>` |
+| **Date Properties** | `osr:inizio`/`osr:fine` | `ocd:startDate`/`ocd:endDate` |
+| **Formato Date** | ISO string (`"2023-10-13"`) | YYYYMMDD (integer: `20231013`) |
+| **Mandati Attivi** | `FILTER(!bound(?fine))` | `MINUS { ?mandato ocd:endDate ?fine }` |
+| **Gruppi** | Classe OCD + proprietà OSR (ibrido) | Classe e proprietà OCD |
+
+### 📊 Gerarchia Entità
 
 ```
-Legislatura (centro) - come numero intero!
+Legislature (numero intero: 19)
+│
 ├── Senatore
 │   ├── Mandato
-│   ├── Gruppo Parlamentare (usa classi OCD!)
-│   └── Commissione
-├── DDL (Disegno di Legge)
-│   ├── Iter
-│   │   ├── FaseIter
-│   │   ├── Assegnazione
-│   │   └── Relatore
-│   ├── Iniziativa (presentatori)
-│   └── Emendamento
-├── Votazione
-│   ├── Seduta Assemblea
-│   └── Espressione Voto
-└── Commissione
-    └── Seduta Commissione
+│   ├── AfferenzaCommissione → Commissione
+│   ├── AdesioneGruppo → GruppoParlamentare (OCD)
+│   └── Intervento
+│
+├── Ddl (Disegno di Legge)
+│   ├── Iniziativa → Senatore
+│   ├── IterDdl
+│   │   └── FaseIter
+│   ├── Assegnazione → Commissione
+│   └── Relatore → Senatore
+│
+└── Votazione
+    └── Collegamenti a Senatori (voti)
 ```
 
 ---
