@@ -165,12 +165,12 @@ classDiagram
     Votazione --> Senatore : voters
 
     %% Styling
-    classDef main-entity fill:#ffe1e1,stroke:#cc0000,stroke-width:3px
-    class Senatore:::main-entity
-    class Ddl:::main-entity
-    class Votazione:::main-entity
-    class Commissione:::main-entity
-    class GruppoParlamentare:::main-entity
+    classDef mainEntity fill:#ffe1e1,stroke:#cc0000,stroke-width:3px
+    class Senatore:::mainEntity
+    class Ddl:::mainEntity
+    class Votazione:::mainEntity
+    class Commissione:::mainEntity
+    class GruppoParlamentare:::mainEntity
 ```
 
 ## Key Characteristics
