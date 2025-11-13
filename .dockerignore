@@ -40,5 +40,5 @@ logs
 README.md
 .prettierrc
 .eslintrc*
-tsconfig.json
+# tsconfig.json - NEEDED for build!
 vitest.config.ts
