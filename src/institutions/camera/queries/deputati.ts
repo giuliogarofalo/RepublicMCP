@@ -38,7 +38,7 @@ export class CameraDeputatiQueries extends BaseQueryBuilder {
     }
 
     const select = `
-SELECT DISTINCT ?deputato ?cognome ?nome ?genere
+?deputato ?cognome ?nome ?genere
   ?dataNascita ?luogoNascita
   ?collegio ?nomeGruppo ?sigla
     `.trim();

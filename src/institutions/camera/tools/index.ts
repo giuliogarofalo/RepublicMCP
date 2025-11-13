@@ -18,9 +18,9 @@ import type { MCPTool } from '../../../core/mcp/types.js';
  * Tool: Search deputies
  */
 const searchDeputatiTool: MCPTool = {
-  name: 'search_deputati',
+  name: 'camera_search_deputati',
   description:
-    'Cerca deputati della Camera per nome, cognome o legislatura. Restituisce informazioni biografiche, gruppo parlamentare e collegio elettorale.',
+    'Cerca deputati della Camera per nome, cognome, gruppo parlamentare o legislatura. Restituisce informazioni biografiche, gruppo parlamentare e collegio elettorale.',
   institution: 'camera',
   inputSchema: {
     type: 'object',
@@ -33,6 +33,10 @@ const searchDeputatiTool: MCPTool = {
         type: 'string',
         description: 'Cognome del deputato (opzionale)',
       },
+      gruppo: {
+        type: 'string',
+        description: 'Nome del gruppo parlamentare (es: "Fratelli d\'Italia", "Partito Democratico", opzionale)',
+      },
       legislatura: {
         type: 'number',
         description: 'Legislatura (es: 19 per la XIX legislatura, default: 19)',
@@ -43,6 +47,7 @@ const searchDeputatiTool: MCPTool = {
     const params = {
       firstName: args.nome,
       surname: args.cognome,
+      parliamentaryGroup: args.gruppo,
       legislature: args.legislatura,
     };
     const query = CameraDeputatiQueries.getCurrentDeputies(params);

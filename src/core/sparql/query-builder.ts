@@ -56,7 +56,15 @@ export abstract class BaseQueryBuilder implements IQueryBuilder {
 
     // ORDER BY
     if (orderBy) {
-      parts.push(`ORDER BY ${orderDirection}(${orderBy})`);
+      // Handle multiple variables in ORDER BY (e.g., "?cognome ?nome")
+      const variables = orderBy.trim().split(/\s+/);
+      if (variables.length > 1) {
+        // Multiple variables: ORDER BY ?var1 ?var2
+        parts.push(`ORDER BY ${orderBy}`);
+      } else {
+        // Single variable: ORDER BY ASC(?var) or DESC(?var)
+        parts.push(`ORDER BY ${orderDirection}(${orderBy})`);
+      }
     }
 
     // LIMIT
