@@ -7,6 +7,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts",
+    "serve": "node dist/http-server.js",
+    "serve:dev": "tsx src/http-server.ts",
     "watch": "tsx --watch src/index.ts",
     "cli": "tsx src/cli-ollama.ts",
     "cli:basic": "tsx src/cli-client.ts",

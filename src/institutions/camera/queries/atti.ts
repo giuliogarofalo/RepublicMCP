@@ -59,9 +59,7 @@ export class CameraAttiQueries extends BaseQueryBuilder {
       filters += `FILTER(?presentazione <= "${dateTo}")\n  `;
     }
 
-    const select = `
-SELECT DISTINCT ?atto ?numero ?titolo ?tipo ?iniziativa ?presentazione ?concluso ?costituzionale
-    `.trim();
+    const select = `?atto ?numero ?titolo ?tipo ?iniziativa ?presentazione ?concluso ?costituzionale`.trim();
 
     const where = `
   ?atto a ocd:atto ;
@@ -114,13 +112,7 @@ SELECT DISTINCT ?atto ?numero ?titolo ?tipo ?iniziativa ?presentazione ?concluso
    * Get detailed info about a specific act
    */
   static getActDetails(actUri: string): string {
-    const select = `
-SELECT DISTINCT ?atto ?numero ?titolo ?tipo ?iniziativa ?presentazione
-  ?concluso ?costituzionale
-  ?fase ?dataFase
-  ?proponente ?nomeProponente ?cognomeProponente
-  ?dataApprovazione
-    `.trim();
+    const select = `?atto ?numero ?titolo ?tipo ?iniziativa ?presentazione ?concluso ?costituzionale ?fase ?dataFase ?proponente ?nomeProponente ?cognomeProponente ?dataApprovazione`.trim();
 
     const where = `
   BIND(<${actUri}> as ?atto)
@@ -183,9 +175,7 @@ SELECT DISTINCT ?atto ?numero ?titolo ?tipo ?iniziativa ?presentazione
       dateFilter += `FILTER(?presentazione <= "${dateTo}")\n  `;
     }
 
-    const select = `
-SELECT DISTINCT ?atto ?numero ?iniziativa ?presentazione ?titolo ?fase ?dataIter ?dataApprovazione
-    `.trim();
+    const select = `?atto ?numero ?iniziativa ?presentazione ?titolo ?fase ?dataIter ?dataApprovazione`.trim();
 
     const where = `
   ?atto a ocd:atto ;
@@ -276,9 +266,7 @@ UNION
 OPTIONAL { ?atto dc:type ?tipo }
 ${roleFilter}`;
 
-    const select = `
-SELECT DISTINCT ?atto ?tipoRuolo ?tipo ?numeroAtto ?date ?titolo ?cognome ?nome
-    `.trim();
+    const select = `?atto ?tipoRuolo ?tipo ?numeroAtto ?date ?titolo ?cognome ?nome`.trim();
 
     const where = `
 ${query}
@@ -303,9 +291,7 @@ ${nameFilter}
    * Get act proponents/signers
    */
   static getActProponents(actUri: string): string {
-    const select = `
-SELECT DISTINCT ?atto ?deputato ?cognome ?nome ?ruolo ?tipoRuolo
-    `.trim();
+    const select = `?atto ?deputato ?cognome ?nome ?ruolo ?tipoRuolo`.trim();
 
     const where = `
   BIND(<${actUri}> as ?atto)
@@ -337,9 +323,7 @@ SELECT DISTINCT ?atto ?deputato ?cognome ?nome ?ruolo ?tipoRuolo
     const { actType, legislature = 19, limit = 50 } = params;
     const legislatureUri = buildLegislatureUri(legislature);
 
-    const select = `
-SELECT DISTINCT ?atto ?numero ?titolo ?tipo ?presentazione ?iniziativa
-    `.trim();
+    const select = `?atto ?numero ?titolo ?tipo ?presentazione ?iniziativa`.trim();
 
     const where = `
   ?atto a ocd:atto ;
