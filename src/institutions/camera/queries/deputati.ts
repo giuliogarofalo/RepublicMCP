@@ -355,7 +355,7 @@ SELECT DISTINCT ?d ?cognome ?nome ?membroGoverno
     }
 
     const select = `
-SELECT ?persona ?cognome ?nome ?info
+?persona ?cognome ?nome ?info
   ?dataNascita ?luogoNascita ?genere
   ?collegio ?lista ?nomeGruppo
   (COUNT(DISTINCT ?mandato) AS ?numeroMandati)
