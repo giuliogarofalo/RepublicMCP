@@ -336,4 +336,82 @@ SELECT DISTINCT ?d ?cognome ?nome ?membroGoverno
       limit: 1000,
     });
   }
+
+  /**
+   * Get all current deputies with mandate count
+   * Returns deputies with total number of mandates (including historical)
+   */
+  static getDeputiesWithMandateCount(params: {
+    legislature?: number;
+    parliamentaryGroup?: string;
+    limit?: number;
+  } = {}): string {
+    const { legislature = 19, parliamentaryGroup, limit = 400 } = params;
+    const legislatureUri = buildLegislatureUri(legislature);
+
+    let filters = '';
+    if (parliamentaryGroup) {
+      filters += `FILTER(REGEX(?nomeGruppo, '${parliamentaryGroup}', 'i'))\n  `;
+    }
+
+    const select = `
+SELECT ?persona ?cognome ?nome ?info
+  ?dataNascita ?luogoNascita ?genere
+  ?collegio ?lista ?nomeGruppo
+  (COUNT(DISTINCT ?mandato) AS ?numeroMandati)
+  ?aggiornamento
+    `.trim();
+
+    const where = `
+  ?deputato a ocd:deputato ;
+    ocd:rif_leg <${legislatureUri}> ;
+    ocd:rif_persona ?persona ;
+    ocd:rif_mandatoCamera ?mandatoCorrente ;
+    foaf:surname ?cognome ;
+    foaf:firstName ?nome ;
+    foaf:gender ?genere .
+
+  # Mandato corrente attivo (senza data fine)
+  ?mandatoCorrente ocd:rif_elezione ?elezioneCorrente .
+  MINUS { ?mandatoCorrente ocd:endDate ?fineMandatoCorrente }
+
+  # Info biografica
+  OPTIONAL { ?deputato dc:description ?info }
+
+  # Nascita
+  OPTIONAL {
+    ?persona bio:Birth ?nascita .
+    ?nascita bio:date ?dataNascita ;
+      ocd:rif_luogo ?luogoNascitaUri .
+    ?luogoNascitaUri dc:title ?luogoNascita .
+  }
+
+  # Collegio e lista del mandato corrente
+  OPTIONAL { ?elezioneCorrente dc:coverage ?collegio }
+  OPTIONAL { ?elezioneCorrente ocd:lista ?lista }
+
+  # Gruppo parlamentare corrente
+  OPTIONAL {
+    ?deputato ocd:aderisce ?aderisce .
+    ?aderisce ocd:rif_gruppoParlamentare ?gruppo .
+    ?gruppo dc:title ?nomeGruppo .
+    MINUS { ?aderisce ocd:endDate ?fineAdesione }
+  }
+
+  # Conta TUTTI i mandati del deputato (anche di legislature precedenti)
+  ?deputato ocd:rif_mandatoCamera ?mandato .
+
+  # Data aggiornamento
+  OPTIONAL { ?deputato dc:modified ?aggiornamento }
+
+  ${filters}
+    `.trim();
+
+    const instance = new CameraDeputatiQueries();
+    return instance.buildQuery(select, where, {
+      groupBy: '?persona ?cognome ?nome ?info ?dataNascita ?luogoNascita ?genere ?collegio ?lista ?nomeGruppo ?aggiornamento',
+      orderBy: '?cognome ?nome',
+      limit,
+    });
+  }
 }

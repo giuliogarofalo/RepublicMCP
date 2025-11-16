@@ -59,6 +59,45 @@ const searchDeputatiTool: MCPTool = {
 };
 
 /**
+ * Tool: Get deputies with mandate count
+ */
+const getDeputatiConMandatiTool: MCPTool = {
+  name: 'camera_get_deputati_con_mandati',
+  description:
+    'Ottiene tutti i deputati in carica con il numero totale di mandati (inclusi quelli di legislature precedenti). Restituisce informazioni complete: dati biografici, gruppo parlamentare, collegio e conteggio mandati.',
+  institution: 'camera',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      legislatura: {
+        type: 'number',
+        description: 'Legislatura (es: 19 per la XIX legislatura, default: 19)',
+      },
+      gruppo: {
+        type: 'string',
+        description: 'Nome del gruppo parlamentare per filtrare (opzionale)',
+      },
+      limit: {
+        type: 'number',
+        description: 'Numero massimo di risultati (default: 400)',
+      },
+    },
+  },
+  handler: async (args: any) => {
+    const params = {
+      legislature: args.legislatura,
+      parliamentaryGroup: args.gruppo,
+      limit: args.limit,
+    };
+    const query = CameraDeputatiQueries.getDeputiesWithMandateCount(params);
+    const result = await cameraClient.select(query);
+    return {
+      content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+    };
+  },
+};
+
+/**
  * Tool: Get deputy info
  */
 const getDeputatoInfoTool: MCPTool = {
@@ -725,13 +764,14 @@ const executeSparqlTool: MCPTool = {
 // ============== EXPORT ALL TOOLS ==============
 
 /**
- * All Camera MCP tools (19 total)
+ * All Camera MCP tools (20 total)
  */
 export const cameraTools: MCPTool[] = [
-  // Deputies (2)
+  // Deputies (3)
   searchDeputatiTool,
+  getDeputatiConMandatiTool,
   getDeputatoInfoTool,
-  // Acts (3)
+  // Acts (4)
   searchAttiTool,
   getAttoInfoTool,
   getAttiConFasiTool,
@@ -760,7 +800,7 @@ export const cameraTools: MCPTool[] = [
  * Tool count
  */
 export const CAMERA_TOOL_COUNT = {
-  deputies: 2,
+  deputies: 3,
   acts: 4,
   voting: 3,
   organs_groups: 4,
