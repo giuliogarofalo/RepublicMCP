@@ -1,11 +1,31 @@
 {
   "name": "republic-mcp",
-  "version": "0.1.0",
-  "description": "MCP Server for Italian Parliament Open Data (Camera e Senato)",
+  "version": "0.2.0",
+  "description": "MCP Server for Italian Parliament Open Data (Camera e Senato) — SPARQL tools over the official Camera dei Deputati and Senato della Repubblica endpoints.",
   "main": "dist/index.js",
   "type": "module",
+  "bin": {
+    "republic-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/giuliogarofalo/RepublicMCP.git"
+  },
+  "homepage": "https://github.com/giuliogarofalo/RepublicMCP#readme",
+  "bugs": {
+    "url": "https://github.com/giuliogarofalo/RepublicMCP/issues"
+  },
   "scripts": {
     "build": "tsc",
+    "prepublishOnly": "npm run build",
     "dev": "tsx src/index.ts",
     "serve": "node dist/http-server.js",
     "serve:dev": "tsx src/http-server.ts",
