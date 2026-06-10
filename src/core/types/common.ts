@@ -3,9 +3,9 @@
  */
 
 /**
- * Istituzione parlamentare
+ * Istituzione parlamentare (openpolis = dati curati OpenPolis/Openparlamento, fonte REST)
  */
-export type Institution = 'camera' | 'senato';
+export type Institution = 'camera' | 'senato' | 'openpolis';
 
 /**
  * Risultato query SPARQL generico

@@ -23,6 +23,9 @@ import { cameraTools } from './institutions/camera/index.js';
 // Import Senato tools
 import { senatoTools } from './institutions/senato/index.js';
 
+// Import OpenPolis tools (dati curati: indice di forza, presenze, conversioni — Fonte: Openpolis)
+import { openpolisTools } from './institutions/openpolis/index.js';
+
 // ============== INITIALIZE TOOL REGISTRY ==============
 
 console.error('Registering Camera tools...');
@@ -33,10 +36,15 @@ console.error('Registering Senato tools...');
 toolRegistry.registerMany(senatoTools);
 console.error(`✓ Registered ${senatoTools.length} Senato tools`);
 
+console.error('Registering OpenPolis tools...');
+toolRegistry.registerMany(openpolisTools);
+console.error(`✓ Registered ${openpolisTools.length} OpenPolis tools`);
+
 const stats = toolRegistry.getStatistics();
 console.error(`\n📊 Total tools registered: ${stats.total}`);
 console.error(`   - Camera: ${stats.byInstitution.camera}`);
 console.error(`   - Senato: ${stats.byInstitution.senato}`);
+console.error(`   - OpenPolis: ${stats.byInstitution.openpolis}`);
 console.error(`   - Both: ${stats.byInstitution.both}\n`);
 
 // ============== CREATE MCP SERVER ==============
@@ -44,7 +52,7 @@ console.error(`   - Both: ${stats.byInstitution.both}\n`);
 const server = new Server(
   {
     name: 'republic-mcp',
-    version: '0.2.0',
+    version: '0.3.0',
   },
   {
     capabilities: {

@@ -108,6 +108,18 @@ See [INSTALLATION.md](./INSTALLATION.md) for detailed setup instructions.
 - `get_commissioni_senato` - Senate commissions
 - `get_gruppi_senato` - Parliamentary groups
 
+### OpenPolis · Openparlamento (7 tools)
+
+> Curated, enriched data via the OpenPolis OPDM REST API (not SPARQL). Adds metrics the raw chamber endpoints lack: **indice di forza** (power ranking), attendance stats, voting cohesion, decree-law conversion status. Anonymous access (10k req/day); set `OPENPOLIS_TOKEN` (JWT) to lift the limit. **License: CC-BY-NC — attribute "Fonte: Openpolis".**
+
+- `openpolis_cerca_parlamentari` - Search deputies/senators (by name/role), ranked by power index
+- `openpolis_indice_di_forza` - Power-index (pp) ranking of parliamentarians
+- `openpolis_profilo_parlamentare` - Member profile: group, constituency, attendance stats
+- `openpolis_cerca_votazioni` - Votes by topic, with outcome, confidence/key votes, cohesion
+- `openpolis_decreti_legge` - Decree-laws with conversion status + Normattiva link
+- `openpolis_attivita_legislativa` - Bills/acts with type, iter phase, signers and rapporteurs
+- `openpolis_organi_parlamentari` - Groups (with power weights), presidency, commissions
+
 ## Project Structure
 
 ```

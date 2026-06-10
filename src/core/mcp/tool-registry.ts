@@ -107,6 +107,7 @@ export class ToolRegistry implements IToolRegistry {
     const result: Record<Institution | 'both', string[]> = {
       camera: [],
       senato: [],
+      openpolis: [],
       both: [],
     };
 
@@ -125,6 +126,7 @@ export class ToolRegistry implements IToolRegistry {
     const byInstitution: Record<Institution | 'both', number> = {
       camera: 0,
       senato: 0,
+      openpolis: 0,
       both: 0,
     };
 

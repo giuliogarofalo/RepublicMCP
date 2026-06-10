@@ -166,3 +166,16 @@ export function getInstitutionConfig(institution: 'camera' | 'senato'): Institut
 export function isValidInstitution(value: string): value is 'camera' | 'senato' {
   return value === 'camera' || value === 'senato';
 }
+
+/**
+ * OpenPolis "Openparlamento" (OPDM) — fonte REST con dati CURATI (indice di forza, presenze, coesione,
+ * conversioni). A differenza di Camera/Senato (SPARQL grezzo). Accesso anonimo (10k req/giorno),
+ * OPENPOLIS_TOKEN (JWT) opzionale. Licenza CC-BY-NC: citare "Fonte: Openpolis".
+ * NB: il client OpenPolis legge questi valori da process.env (vedi institutions/openpolis/client.ts).
+ */
+export const OPENPOLIS = {
+  name: 'OpenPolis · Openparlamento',
+  baseUrl: 'https://service.opdm.openpolis.io/api-openparlamento/v1',
+  legislature: '19', // XIX
+  license: 'CC-BY-NC',
+} as const;

@@ -1,7 +1,7 @@
 {
   "name": "republic-mcp",
-  "version": "0.2.0",
-  "description": "MCP Server for Italian Parliament Open Data (Camera e Senato) — SPARQL tools over the official Camera dei Deputati and Senato della Repubblica endpoints.",
+  "version": "0.3.0",
+  "description": "MCP Server for Italian Parliament Open Data (Camera, Senato e OpenPolis) — SPARQL tools over the official Camera dei Deputati and Senato della Repubblica endpoints, plus curated OpenPolis/Openparlamento data (indice di forza, presenze, votazioni, decreti).",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
