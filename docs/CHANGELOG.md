@@ -2,25 +2,47 @@
 
 Tutte le modifiche importanti a questo progetto saranno documentate in questo file.
 
-## [0.1.0] - 2024-11-06
+## [0.3.0] - 2026-06-10
 
 ### Aggiunto
-- ✅ Struttura iniziale del progetto
+- ✅ Integrazione OpenPolis/Openparlamento: 7 tool aggiuntivi (indice di forza, votazioni, decreti-legge, profili parlamentari, organi) via OPDM REST API
+
+## [0.2.0] - 2026-06-07
+
+### Aggiunto
+- ✅ Setup pubblicazione npm (`republic-mcp`): bin, files, publishConfig, CI workflow
+- ✅ Modulo Senato della Repubblica completo: 11 tool (senatori, DDL con iter, votazioni, commissioni, gruppi) sull'ontologia OSR
+- ✅ Supporto Docker per il server MCP
+- ✅ Documentazione differenze ontologiche Camera (OCD) ↔ Senato (OSR) con esempi query-by-query
+- ✅ Diagrammi TypeScript dei type system per entrambe le ontologie
+
+## [0.1.0] - 2025-11-16
+
+### Aggiunto
+- ✅ Struttura iniziale del progetto e architettura core condivisa
 - ✅ Documentazione completa dell'ontologia OCD
 - ✅ Client SPARQL per Camera dei Deputati
 - ✅ Query Builder con query pre-costruite
-- ✅ Server MCP con 11 tools:
+- ✅ Server MCP con 19 tool Camera:
   - `search_deputati` - Cerca deputati
   - `get_deputato_info` - Info dettagliate deputato
+  - `get_deputato_mandati` - Mandati e storico deputato
   - `search_atti` - Cerca atti parlamentari
   - `get_atto_info` - Info dettagliate atto
-  - `get_votazioni` - Ottieni votazioni
+  - `get_atti_deputato` - Atti per deputato (firmatario/co-firmatario)
+  - `get_atti_con_fasi` - Atti con iter completo
+  - `get_votazioni` - Votazioni recenti/filtrate
+  - `get_espressioni_voto` - Espressioni di voto dettagliate
+  - `get_statistiche_voto_deputato` - Statistiche di voto deputato
   - `get_gruppi_parlamentari` - Lista gruppi
   - `get_commissioni` - Lista commissioni
+  - `get_incarichi_gruppi` - Incarichi nei gruppi
+  - `get_incarichi_organi` - Incarichi nelle commissioni
   - `get_governi` - Info governi
   - `get_governo_membri` - Membri governo
+  - `get_incarichi_governo` - Incarichi ministeriali
   - `search_interventi` - Cerca interventi in aula
-  - `execute_sparql` - Query SPARQL personalizzate
+  - `get_interventi_per_argomento` - Interventi per argomento
 - ✅ TypeScript types per entità OCD
 - ✅ Script di test per validare query
 - ✅ Documentazione utente completa
@@ -30,31 +52,18 @@ Tutte le modifiche importanti a questo progetto saranno documentate in questo fi
 ### Documentazione
 - ✅ README.md
 - ✅ INSTALLATION.md
-- ✅ USAGE_EXAMPLES.md
-- ✅ PROJECT_SUMMARY.md
-- ✅ docs/01-ontologia-camera.md
-- ✅ docs/02-rappresentazione-semantica.md
-- ✅ docs/03-sparql-endpoint.md
-- ✅ docs/04-query-examples.md
-- ✅ docs/05-query-examples-official.md
+- ✅ docs/camera/*.md (ontologia, rappresentazione semantica, endpoint SPARQL, esempi)
 
-## [Planned] - Roadmap Futura
+## Roadmap futura
 
-### v0.2.0 - Miglioramenti Base
-- [ ] Supporto per Senato della Repubblica
-- [ ] Aggiungere endpoint SPARQL del Senato
-- [ ] Mappare ontologia del Senato
-- [ ] Tools specifici per il Senato
-- [ ] Query cross-camera (Camera + Senato)
-
-### v0.3.0 - Performance e Cache
+### Performance e Cache
 - [ ] Implementare cache Redis per query frequenti
 - [ ] Rate limiting per proteggere l'endpoint
 - [ ] Ottimizzazione query SPARQL
 - [ ] Batch queries per ridurre chiamate
 - [ ] Monitoring performance
 
-### v0.4.0 - Features Avanzate
+### Features Avanzate
 - [ ] Ricerca full-text migliorata
 - [ ] Fuzzy matching per nomi
 - [ ] Suggerimenti auto-completamento
@@ -197,4 +206,4 @@ MIT License - vedi file LICENSE per dettagli
 
 ---
 
-**Ultimo aggiornamento**: 6 Novembre 2024
+**Ultimo aggiornamento**: 10 Giugno 2026 (v0.3.0)

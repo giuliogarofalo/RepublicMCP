@@ -1,19 +1,43 @@
-# RepublicMCP - Italian Parliament Data MCP Server
+# RepublicMCP — Italian Parliament Data MCP Server
 
-> MCP (Model Context Protocol) server for querying Italian Parliament open data (Camera dei Deputati and Senato della Repubblica) via SPARQL endpoints.
+[![npm version](https://img.shields.io/npm/v/republic-mcp)](https://www.npmjs.com/package/republic-mcp)
+[![License: MIT](https://img.shields.io/npm/l/republic-mcp)](./LICENSE)
+[![Listed in italia-mcp-servers](https://img.shields.io/badge/listed%20in-italia--mcp--servers-blue)](https://github.com/bsab/italia-mcp-servers)
+
+> MCP (Model Context Protocol) server for Italian Parliament open data — **Camera dei Deputati** and **Senato della Repubblica** via their official SPARQL endpoints, plus curated **OpenPolis** data. 37 tools, hand-mapped ontologies, gotchas documented so you don't have to rediscover them.
 
 ## Overview
 
-RepublicMCP provides a comprehensive MCP server implementation that enables AI assistants (like Claude) to query Italian Parliament data through 30+ specialized tools. The server integrates with both parliamentary chambers using their official SPARQL endpoints and ontologies.
+RepublicMCP lets AI assistants (Claude, or any MCP client) query Italian Parliament data — deputies, senators, bills, votes, groups, commissions, governments, floor speeches — through 37 specialized tools, built directly on the official SPARQL endpoints and ontologies of both chambers.
 
 ### Key Features
 
-- **30+ MCP Tools** across both institutions
-- **SPARQL-based** queries with type-safe TypeScript implementations
-- **Dual Institution Support**: Camera dei Deputati and Senato della Repubblica
-- **Modular Architecture** for easy extension
-- **Rich Type System** based on official ontologies (OCD and OSR)
-- **Production Ready** with comprehensive documentation
+- **37 MCP tools** across Camera (19), Senato (11), and OpenPolis (7)
+- **SPARQL-based**, type-safe TypeScript implementations
+- **Dual institution support** — Camera dei Deputati and Senato della Repubblica, each with its own query builder because [the two ontologies disagree in ways that will break your queries](./docs/senato/03-differenze-camera-senato.md) if you assume they're compatible
+- **Rich type system** based on the official ontologies (OCD for Camera, OSR for Senato)
+- **Published on npm** as [`republic-mcp`](https://www.npmjs.com/package/republic-mcp)
+
+## Why RepublicMCP exists (and what makes it different)
+
+Camera and Senato publish their data as two *separate, independently modeled* SPARQL ontologies (OCD and OSR) that look similar on the surface and diverge in ways that are easy to get wrong. Mapping both by hand — and documenting exactly where they diverge — is most of the actual work behind this project:
+
+| | Camera (OCD) | Senato (OSR) |
+|---|---|---|
+| Surname property | `foaf:surname` | `foaf:lastName` |
+| Legislature | full URI | plain integer |
+| Mandate start/end | `ocd:startDate` / `ocd:endDate` | `osr:inizio` / `osr:fine` |
+| Active-mandate pattern | `MINUS { ?m ocd:endDate ?e }` | `FILTER(!bound(?fine))` |
+| Parliamentary groups | `ocd:gruppoParlamentare` | reuses Camera's class, but with OSR properties |
+
+This is a small sample — the full comparison (with query-by-query examples) is in [`docs/senato/03-differenze-camera-senato.md`](./docs/senato/03-differenze-camera-senato.md), and the TypeScript type diagrams for each ontology are in [`docs/camera/ontology-diagram.md`](./docs/camera/ontology-diagram.md) and [`docs/senato/ontology-diagram.md`](./docs/senato/ontology-diagram.md). If you're building anything else against these endpoints, that document will likely save you the hours it took to work out the hard way.
+
+### Known limitations
+
+- Data isn't real-time — the SPARQL endpoints lag behind official publication.
+- Many older votes only have aggregate counts, not individual `favorevole`/`contrario`/`astenuto` per member.
+- Full act/bill text isn't in the SPARQL endpoint (only metadata + iter) — for full text see [`documenti.camera.it`](https://documenti.camera.it) / the Senato equivalent.
+- No local caching yet — every query hits the live endpoint.
 
 ## Quick Start
 
@@ -21,16 +45,14 @@ RepublicMCP provides a comprehensive MCP server implementation that enables AI a
 
 - Node.js >= 18.0.0
 - npm or yarn
-- Claude Desktop (for MCP integration)
+- Claude Desktop (for MCP integration) or any other MCP-compatible client
 
 ### Installation
 
 ```bash
-# Clone and install dependencies
-npm install
-
-# Build the project
-npm run build
+npm install -g republic-mcp
+# or, from source:
+npm install && npm run build
 ```
 
 ### Configuration with Claude Desktop
@@ -43,14 +65,21 @@ Add to your `claude_desktop_config.json`:
 {
   "mcpServers": {
     "republican": {
-      "command": "node",
-      "args": ["/absolute/path/to/republicMCP/dist/index.js"]
+      "command": "npx",
+      "args": ["-y", "republic-mcp"]
     }
   }
 }
 ```
 
-See [INSTALLATION.md](./INSTALLATION.md) for detailed setup instructions.
+See [INSTALLATION.md](./INSTALLATION.md) for detailed setup instructions, including running from a local clone.
+
+### Example: what you can actually ask it
+
+- *"Cerca Giorgia Meloni tra i deputati e dammi il suo indice di forza"* → `search_deputati` + `openpolis_indice_di_forza`
+- *"Che iter ha fatto il DDL sull'autonomia differenziata al Senato?"* → `get_ddl_con_iter`
+- *"Chi ha votato contro l'ultimo decreto-legge sulla giustizia?"* → `get_votazioni` + `get_espressioni_voto`
+- *"Quali sono i decreti-legge in scadenza di conversione?"* → `openpolis_decreti_legge`
 
 ## Available MCP Tools
 
@@ -87,7 +116,7 @@ See [INSTALLATION.md](./INSTALLATION.md) for detailed setup instructions.
 - `search_interventi` - Search speeches by topic
 - `get_interventi_per_argomento` - Interventions filtered by argument
 
-### Senato della Repubblica (10+ tools)
+### Senato della Repubblica (11 tools)
 
 **Senators**
 - `search_senatori` - Search senators by name/legislature
@@ -153,6 +182,7 @@ republicMCP/
 │   └── senato/                  # Senato documentation
 │       ├── README.md            # Full Senato workflow guide
 │       ├── ontology-diagram.md  # TypeScript type diagram
+│       ├── 03-differenze-camera-senato.md  # Camera ↔ Senato ontology diff
 │       └── *.md                 # Ontology & query docs
 ├── README.md                    # This file
 ├── INSTALLATION.md              # Setup guide
@@ -189,6 +219,7 @@ republicMCP/
 
 - **[Camera dei Deputati Guide](./docs/camera/README.md)** - Complete workflow, examples, and ontology
 - **[Senato della Repubblica Guide](./docs/senato/README.md)** - Complete workflow, examples, and ontology
+- **[Camera ↔ Senato differences](./docs/senato/03-differenze-camera-senato.md)** - Full ontology diff with query-by-query examples
 - **[Installation Guide](./INSTALLATION.md)** - Setup and configuration
 - **[Changelog](./CHANGELOG.md)** - Version history and updates
 
@@ -213,8 +244,8 @@ RepublicMCP uses a modular architecture:
    - Common TypeScript types
 
 2. **Institution Layer** (`src/institutions/`)
-   - Camera module with 19+ tools
-   - Senato module with 10+ tools
+   - Camera module with 19 tools
+   - Senato module with 11 tools
    - Each with dedicated ontology types, query builders, and tools
 
 3. **Configuration** (`src/config/`)
@@ -230,13 +261,13 @@ This design enables:
 
 ## Integration Context
 
-RepublicMCP is designed as a standalone MCP server module within the larger OPEN-PARLAMENT project:
+RepublicMCP is developed as part of **[Open Parlament](https://open-parlament.xyz)**, an agent that answers questions about the Italian state by joining the **law** (Constitution, codes, EU legislation, verbatim citations) with **public data** (budgets, procurement, statistics) — RepublicMCP is the connector that supplies the parliamentary side of that data (acts, votes, deputies, senators, groups) to the agent.
+
+It also works entirely standalone as a general-purpose MCP server for Camera/Senato data, independent of Open Parlament:
 
 - **republicMCP** (this module): MCP server for parliamentary data access
-- **backend** (separate): Handles authentication, memory, and model management (Ollama/Gemini/Anthropic)
-- **frontend** (separate): User interface
-
-This isolation ensures clean separation of concerns and modular development.
+- **backend** (separate, part of Open Parlament): Authentication, memory, model management
+- **frontend** (separate, part of Open Parlament): User interface
 
 ## Technology Stack
 
@@ -244,6 +275,14 @@ This isolation ensures clean separation of concerns and modular development.
 - **Model Context Protocol** - AI integration standard
 - **SPARQL** - Semantic web query language
 - **Node.js** - Runtime environment
+
+## Related projects
+
+Part of a growing ecosystem of Italian open-data MCP servers (see the [italia-mcp-servers catalog](https://github.com/bsab/italia-mcp-servers)). A few worth knowing about if you're working in this space:
+
+- [Italian Parliament MCP](https://github.com/aborruso/italianparliament-mcp) — another MCP over the same Camera/Senato SPARQL endpoints, with a different tool surface (career/Wikidata cross-referencing, historical data back to 1848).
+- [DoveVannoINostriSoldi](https://github.com/Italian-Builders-Org/DoveVannoINostriSoldi) — public spending/budget data (SIOPE, ANAC, OpenBDAP), including Camera's own administrative budget — complements RepublicMCP's institutional data.
+- [mcp-legal-it](https://github.com/capazme/mcp-legal-it) / [BetterCallClaude Italia](https://github.com/fedec65/bettercallclaude_italia) — Normattiva, EU law, and case-law citation tools for the legislative side.
 
 ## Contributing
 
@@ -273,6 +312,5 @@ MIT
 
 ---
 
-**Maintained by**: [Your Name/Organization]
-**Last Updated**: 2025-11-12
-**Version**: 2.0.0
+**Maintained by**: [Giulio Garofalo](https://github.com/giuliogarofalo) — part of [Open Parlament](https://open-parlament.xyz)
+**Version**: 0.3.0 (see [CHANGELOG.md](./CHANGELOG.md))
