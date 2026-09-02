@@ -3,7 +3,7 @@
  * Query builders for votations and vote expressions
  */
 
-import { BaseQueryBuilder } from '../../../core/sparql/query-builder.js';
+import { BaseQueryBuilder, normalizeYyyymmdd } from '../../../core/sparql/query-builder.js';
 import { VOTING_PREFIXES } from '../ontology/prefixes.js';
 import type { VotazioneSearchParams, VoteStatsParams, VoteExpression } from '../ontology/types.js';
 
@@ -25,10 +25,10 @@ export class CameraVotazioniQueries extends BaseQueryBuilder {
 
     let dateFilter = '';
     if (dateFrom) {
-      dateFilter += `FILTER(?data >= "${dateFrom}")\n  `;
+      dateFilter += `FILTER(?data >= "${normalizeYyyymmdd(dateFrom)}")\n  `;
     }
     if (dateTo) {
-      dateFilter += `FILTER(?data <= "${dateTo}")\n  `;
+      dateFilter += `FILTER(?data <= "${normalizeYyyymmdd(dateTo)}")\n  `;
     }
 
     let filters = '';
@@ -246,10 +246,10 @@ SELECT DISTINCT ?cognome ?nome ?espressione (COUNT(DISTINCT ?votazione) as ?nume
 
     let dateFilter = '';
     if (dateFrom) {
-      dateFilter += `FILTER(?data >= "${dateFrom}")\n  `;
+      dateFilter += `FILTER(?data >= "${normalizeYyyymmdd(dateFrom)}")\n  `;
     }
     if (dateTo) {
-      dateFilter += `FILTER(?data <= "${dateTo}")\n  `;
+      dateFilter += `FILTER(?data <= "${normalizeYyyymmdd(dateTo)}")\n  `;
     }
 
     const select = `
@@ -295,10 +295,10 @@ SELECT DISTINCT ?votazione ?data ?titoloVotazione ?espressione ?motivoAssenza
 
     let dateFilter = '';
     if (dateFrom) {
-      dateFilter += `FILTER(?data >= "${dateFrom}")\n  `;
+      dateFilter += `FILTER(?data >= "${normalizeYyyymmdd(dateFrom)}")\n  `;
     }
     if (dateTo) {
-      dateFilter += `FILTER(?data <= "${dateTo}")\n  `;
+      dateFilter += `FILTER(?data <= "${normalizeYyyymmdd(dateTo)}")\n  `;
     }
 
     const select = `

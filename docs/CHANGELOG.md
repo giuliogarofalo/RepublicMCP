@@ -2,6 +2,22 @@
 
 Tutte le modifiche importanti a questo progetto saranno documentate in questo file.
 
+## [0.3.1] - 2026-09-02
+
+### Corretto
+- ✅ **Filtro data Camera** (`search_atti`, `get_votazioni` e simili): `dateFrom`/`dateTo` venivano confrontati
+  come stringa grezza contro i letterali `dc:date` della Camera, che sono in formato `YYYYMMDD` senza separatori
+  (es. `"20240115"`). Passare una data in formato `YYYY-MM-DD` (il formato naturale) produceva un confronto
+  lessicografico privo di senso. Aggiunta normalizzazione (`normalizeYyyymmdd`) che accetta entrambi i formati.
+- ✅ **`ORDER BY` con doppio wrapping**: diverse query (es. `search_atti` di default) generavano SPARQL
+  sintatticamente invalido — `ORDER BY ASC(DESC(?presentazione))` — quando l'`orderBy` passato a `buildQuery`
+  era già esplicitamente direzionato (es. `"DESC(?presentazione)"`), causando un errore di sintassi Virtuoso
+  (SP030) e il fallimento completo della query. Corretto alla radice in `BaseQueryBuilder.buildQuery`.
+- Individuati confrontando i 44 "gotcha" documentati sul motore Virtuoso dal progetto
+  [Italian Parliament MCP](https://github.com/aborruso/italianparliament-mcp) (stessi due endpoint SPARQL
+  ufficiali) — nessun codice copiato, solo la loro documentazione usata come checklist di audit. Grazie.
+- Entrambi verificati dal vivo contro `dati.camera.it/sparql` prima e dopo il fix.
+
 ## [0.3.0] - 2026-06-10
 
 ### Aggiunto
@@ -206,4 +222,4 @@ MIT License - vedi file LICENSE per dettagli
 
 ---
 
-**Ultimo aggiornamento**: 10 Giugno 2026 (v0.3.0)
+**Ultimo aggiornamento**: 2 Settembre 2026 (v0.3.1)

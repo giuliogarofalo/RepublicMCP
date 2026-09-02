@@ -3,7 +3,7 @@
  * Query builders for legislative acts (DDL, proposals, motions)
  */
 
-import { BaseQueryBuilder } from '../../../core/sparql/query-builder.js';
+import { BaseQueryBuilder, normalizeYyyymmdd } from '../../../core/sparql/query-builder.js';
 import { CAMERA_PREFIXES, buildLegislatureUri } from '../ontology/prefixes.js';
 import type { AttoSearchParams } from '../ontology/types.js';
 
@@ -53,10 +53,10 @@ export class CameraAttiQueries extends BaseQueryBuilder {
       filters += `FILTER(?costituzionale = ${costituzValue})\n  `;
     }
     if (dateFrom) {
-      filters += `FILTER(?presentazione >= "${dateFrom}")\n  `;
+      filters += `FILTER(?presentazione >= "${normalizeYyyymmdd(dateFrom)}")\n  `;
     }
     if (dateTo) {
-      filters += `FILTER(?presentazione <= "${dateTo}")\n  `;
+      filters += `FILTER(?presentazione <= "${normalizeYyyymmdd(dateTo)}")\n  `;
     }
 
     const select = `?atto ?numero ?titolo ?tipo ?iniziativa ?presentazione ?concluso ?costituzionale`.trim();
@@ -169,10 +169,10 @@ export class CameraAttiQueries extends BaseQueryBuilder {
 
     let dateFilter = '';
     if (dateFrom) {
-      dateFilter += `FILTER(?presentazione >= "${dateFrom}")\n  `;
+      dateFilter += `FILTER(?presentazione >= "${normalizeYyyymmdd(dateFrom)}")\n  `;
     }
     if (dateTo) {
-      dateFilter += `FILTER(?presentazione <= "${dateTo}")\n  `;
+      dateFilter += `FILTER(?presentazione <= "${normalizeYyyymmdd(dateTo)}")\n  `;
     }
 
     const select = `?atto ?numero ?iniziativa ?presentazione ?titolo ?fase ?dataIter ?dataApprovazione`.trim();
