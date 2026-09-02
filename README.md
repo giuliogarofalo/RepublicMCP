@@ -1,7 +1,7 @@
 # RepublicMCP — Italian Parliament Data MCP Server
 
 [![npm version](https://img.shields.io/npm/v/republic-mcp)](https://www.npmjs.com/package/republic-mcp)
-[![License: MIT](https://img.shields.io/npm/l/republic-mcp)](./LICENSE)
+[![License: Apache-2.0](https://img.shields.io/npm/l/republic-mcp)](./LICENSE)
 [![Listed in italia-mcp-servers](https://img.shields.io/badge/listed%20in-italia--mcp--servers-blue)](https://github.com/bsab/italia-mcp-servers)
 
 > MCP (Model Context Protocol) server for Italian Parliament open data — **Camera dei Deputati** and **Senato della Repubblica** via their official SPARQL endpoints, plus curated **OpenPolis** data. 37 tools, hand-mapped ontologies, gotchas documented so you don't have to rediscover them.
@@ -295,7 +295,7 @@ Contributions are welcome! Areas for contribution:
 
 ## License
 
-MIT
+Apache-2.0
 
 ## Resources
 

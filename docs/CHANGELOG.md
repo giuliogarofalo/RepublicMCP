@@ -2,6 +2,12 @@
 
 Tutte le modifiche importanti a questo progetto saranno documentate in questo file.
 
+## [0.3.2] - 2026-09-03
+
+### Cambiato
+- **Licenza: MIT → Apache-2.0.** Stessa filosofia permissiva (nessun copyleft), ma con patent grant esplicita.
+  Le versioni precedenti restano disponibili sotto MIT per chi le ha già installate.
+
 ## [0.3.1] - 2026-09-02
 
 ### Corretto
@@ -212,7 +218,7 @@ Questo progetto usa [Semantic Versioning](https://semver.org/):
 
 ## License
 
-MIT License - vedi file LICENSE per dettagli
+Apache License 2.0 - vedi file LICENSE per dettagli
 
 ## Acknowledgments
 
@@ -222,4 +228,4 @@ MIT License - vedi file LICENSE per dettagli
 
 ---
 
-**Ultimo aggiornamento**: 2 Settembre 2026 (v0.3.1)
+**Ultimo aggiornamento**: 3 Settembre 2026 (v0.3.2)
